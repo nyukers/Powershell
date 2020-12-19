@@ -20,4 +20,6 @@ Import-DscResource –ModuleName "PSDesiredStateConfiguration"
 }
 }
 
-DeleteFile -OutputPath c:\VM\shared\PS\DSC
+DeleteFile -OutputPath c:\VM\shared\PS\DSC\MOF
+
+AddFile -OutputPath c:\VM\shared\PS\DSC\MOF -ConfigurationData c:\VM\shared\PS\DSC\configdata.psd1

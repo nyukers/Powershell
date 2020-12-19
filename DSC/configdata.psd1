@@ -20,4 +20,4 @@ Import-DscResource –ModuleName PSDesiredStateConfiguration
     }
 }
 
-#AddFile -OutputPath c:\VM\shared\PS\DSC -ConfigurationData $ConfigurationData 
+AddFile -OutputPath c:\VM\shared\PS\DSC\MOF -ConfigurationData $ConfigurationData 
