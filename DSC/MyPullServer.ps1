@@ -2,11 +2,11 @@
     AllNodes = @(
 
     @{
-        NodeName = 'MyPullServerName'
+        NodeName = 'GOVERLA'
         Role = @('Web', 'PullServer')
-        CertThumbPrint = Invoke-Command -Computername 'MyPullServerName' -ScriptBlock {
+        CertThumbPrint = Invoke-Command -Computername 'GOVERLA' -ScriptBlock {
         Get-Childitem -Path Cert:\LocalMachine\My |
-        where Subject -Like 'CN=MyPullServerName*' |
+        where Subject -Like 'CN=GOVERLA*' |
         Select-Object -ExpandProperty ThumbPrint}
     }
   );
