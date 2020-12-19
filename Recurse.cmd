@@ -1,0 +1,1 @@
+PowerShell.exe (Get-ChildItem -Path cert: -Recurse -ExpiringInDays 45).subject
