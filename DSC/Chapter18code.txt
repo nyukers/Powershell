@@ -1,0 +1,268 @@
+## Code for chapter 18 PowerShell in Action third edition
+##  This file contains the code from the chapter body. 
+##  Any individual listings are supplied in separate files
+##  Code has been unwrapped so may look slightly different 
+##  to that presented in the book
+
+
+## 18.1.2 Desired State Configuration model
+## DSC configuration
+
+Configuration AddFile {
+  File TestFolder {
+    Ensure = 'Present'
+    Type = 'Directory'
+    DestinationPath = 'C:\TestFolder'
+    Force = $true
+  }
+}
+
+
+## DSC resources
+Find-DscResource
+
+
+## Idempotent operation
+9*1
+9*1*1
+9*1*1*1
+9*1*1*1*1
+
+
+## 18.2 Push mode to a single node
+## 18.2.1 Create configuration
+
+Configuration AddFile {
+  File TestFolder {
+    Ensure = 'Present'
+    Type = 'Directory'
+    DestinationPath = 'C:\TestFolder'
+    Force = $true
+  }
+}
+
+see - listing 18.1
+AddFile -OutputPath .\MOF
+
+see - listing 18.2 - W16TGT01.mof
+
+
+## 18.2.3 Applying the configuration
+
+Start-DscConfiguration -ComputerName W16TGT01 -Path .\MOF\ -Wait -Verbose
+
+Start-DscConfiguration -ComputerName W16TGT01 -Path .\MOF\ -Wait -Verbose
+
+
+## 18.2.4 Testing the configuration application
+
+Invoke-Command -ComputerName W16TGT01 -ScriptBlock {
+  Get-Content -Path c:\testfolder\testfile1.txt
+}
+
+Test-DscConfiguration -ComputerName W16TGT01
+
+Test-DscConfiguration -ComputerName W16TGT01 -ReferenceConfiguration .\MOF\W16TGT01.mof |
+Format-List
+
+Test-DscConfiguration -ComputerName W16TGT01 -Verbose
+
+
+## 18.2.5 Viewing the current configuration
+$cs = New-CimSession -ComputerName W16TGT01
+Get-DscConfiguration -CimSession $cs
+
+Remove-CimSession -CimSession $cs
+
+
+## 18.2.6 Removing a configuration
+
+see lsiting 18.3 
+
+Start-DscConfiguration -ComputerName W16TGT01 -Path .\MOF\ -Wait
+Test-Path -Path \\W16TGT01\C$\TestFolder\TestFile1.txt
+
+
+## 18.3 Pushing to multiple nodes
+## 18.3.1 Parameterizing the computer name
+
+see listing 18.4
+Start-DscConfiguration -ComputerName W16TGT01, W16DSC02 -Path .\MOF\ -Wait
+
+Get-Job -IncludeChildJob
+
+Test-DscConfiguration -ComputerName W16TGT01, W16DSC02
+
+Get-DscConfiguration -CimSession W16TGT01, W16DSC02 |
+Format-Table PSComputerName, ConfigurationName, Ensure, Type -AutoSize
+
+
+## 18.3.2 Using configuration data
+
+see listing 18.5
+
+Start-DscConfiguration -ComputerName W16TGT01, W16DSC02 -Path .\MOF\ -Wait -Verbose
+
+Test-DscConfiguration -ComputerName W16TGT01
+Test-DscConfiguration -ComputerName W16DSC02
+
+Test-DscConfiguration -ComputerName W16TGT01, W16DSC02
+
+Invoke-Command -ComputerName W16TGT01, W16DSC02 -ScriptBlock {Get-Content -Path C:\TestFolder\TestFile1.txt}
+
+
+## 18.3.3 Configuration data and roles
+
+see listing 18.6 
+
+Start-DscConfiguration -ComputerName W16TGT01, W16CN01 -Path .\MOF\ -Wait -Verbose
+
+Invoke-Command -ComputerName W16TGT01, W16CN01 -ScriptBlock {
+  Get-WindowsFeature -Name Hyper-V-PowerShell, RSAT-AD-PowerShell
+} | sort Name |
+Format-Table Name, DisplayName, Installed, PSComputerName
+
+
+## 18.4 DSC in pull mode
+## 18.4.2 Creating a pull server
+## Pull server prerequisites
+
+Get-ChildItem -Path Cert:\LocalMachine\My\
+
+Find-Module xPSDesiredStateConfiguration
+Find-Module xWebAdministration
+
+Install-Module -Name xPSDesiredStateConfiguration, xWebAdministration -Force
+
+
+## Creating the pull server
+
+see listing 18.7
+
+Start-DscConfiguration -ComputerName W16DSC02 -Path .\MOF\ -Wait -Verbose
+Restart-computer -ComputerName W16DSC02 -Wait -Force
+
+Test-DscConfiguration -ComputerName W16DSC02
+
+Start-Process -FilePath iexplore.exe https://W16DSC02:8080/PSDSCPullServer.svc
+
+
+## 18.4.3 Publishing a MOF file
+
+Install-Module -Name xSmbShare -Force
+
+see listing 18.8
+
+$psclientid = New-Guid | select -ExpandProperty guid
+$psclientid
+
+Get-ChildItem -Path C:\scripts\MOF\W16TGT01.mof |
+Rename-Item -NewName "C:\scripts\MOF\$psclientid.mof"
+
+New-DscChecksum -Path "C:\scripts\MOF\$psclientid.mof" -Force
+
+$s = New-PSSession -ComputerName W16DSC02
+Get-ChildItem -Path .\MOF\ -Filter "$psclientid.*" |
+Copy-Item -Destination "C:\program Files\WindowsPowerShell\DscService\Configuration" -ToSession $s -Force
+
+$module = Get-Module -ListAvailable xSmbShare
+$modulepath = "$(Split-Path -Path $module.Path)\*"
+$moduleversion = $module.Version.ToString()
+
+Compress-Archive -Path $modulepath -DestinationPath "C:\scripts\ModuleZips\xSMBShare_$moduleversion.zip" -Force
+
+New-DscChecksum -Path "C:\scripts\ModuleZips\xSMBShare_$moduleversion.zip" -Force
+
+Get-ChildItem -Path "C:\scripts\ModuleZips\xSMBShare_$moduleversion.*" |
+Copy-Item -Destination "C:\Program Files\WindowsPowerShell\DscService\Modules\" -ToSession $s -Force
+
+
+## 18.5 Configuring the Local Configuration Manager
+## 18.5.1 LCM settings
+$cs = New-CimSession -ComputerName W16TGT01
+Get-DscLocalConfigurationManager -CimSession $cs
+
+
+## Changing LCM settings
+see listing 18.9
+
+C:\Scripts\Listing18.9.ps1
+
+Set-DscLocalConfigurationManager -CimSession $cs -Path .\MOF\ -Verbose
+
+Get-DscLocalConfigurationManager -CimSession $cs |
+select ConfigurationMode, RebootNodeIfNeeded
+
+
+## 18.5.2 Configuring LCM to use a pull server
+
+see listing 18.10
+
+Set-DscLocalConfigurationManager -ComputerName W16TGT01 -Path .\MOF\ -Verbose
+
+Get-DscLocalConfigurationManager -CimSession $cs
+
+Update-DscConfiguration -CimSession $cs -Verbose -Wait
+
+Test-DscConfiguration -CimSession $cs
+
+Get-SmbShare -CimSession $cs
+Get-Content -Path "\\W16TGT01\Standard\TestFile1.txt"
+
+
+## 18.6 Partial configurations
+## 18.6.2 Pushing partial configurations
+
+see listing 18.11
+see listing 18.12
+
+see listing 18.13
+
+Set-DscLocalConfigurationManager -Path .\MOF\ -ComputerName W16CN01
+
+$cs = New-CimSession -ComputerName W16CN01
+Get-DscLocalConfigurationManager -CimSession $cs
+
+Get-DscLocalConfigurationManager -CimSession $cs |
+select -ExpandProperty PartialConfigurations
+
+Publish-DscConfiguration -Path .\MOF\Env\ -ComputerName W16CN01 -Verbose
+Publish-DscConfiguration -Path .\MOF\Reg\ -ComputerName W16CN01 -Verbose
+
+Start-DscConfiguration -ComputerName W16CN01 -UseExisting -Wait -Verbose
+
+Test-DscConfiguration -ComputerName W16CN01
+
+
+## 18.6.3 Pulling partial configurations
+
+see listing 18.14
+
+Set-DscLocalConfigurationManager -Path .\MOF\ -ComputerName W16TGT01 -Force
+
+Get-DscLocalConfigurationManager -CimSession W16TGT01 |
+Format-List ConfigurationDownloadManagers, ConfigurationID, ConfigurationMode, PartialConfigurations, RefreshMode
+
+EnvVarConfig -ComputerName W16TGT01 -OutputPath .\MOF\Env\
+RegConfig -ComputerName W16TGT01 -OutputPath .\MOF\Reg\
+
+$cid = Get-DscLocalConfigurationManager -CimSession $cs |
+select -ExpandProperty ConfigurationID
+
+Rename-Item -Path C:\Scripts\MOF\Env\W16TGT01.mof `
+-NewName "EnvVarConfig.$cid.mof"
+
+Rename-Item -Path C:\Scripts\MOF\Reg\W16TGT01.mof `
+-NewName "RegConfig.$cid.mof"
+
+New-DscChecksum -Path .\MOF\Env\EnvVarConfig.5827c542-20bb-487c-89cb-484cbe5f0b1f.mof -Force
+
+New-DscChecksum -Path .\MOF\Reg\RegConfig.5827c542-20bb-487c-89cb-484cbe5f0b1f.mof -Force
+
+Get-ChildItem -Path .\MOF\Env -Filter "*$cid*" | 
+Copy-Item -Destination 'C:\Program Files\WindowsPowerShell\DscService\Configuration\ -ToSession $s -Force
+
+Get-ChildItem -Path .\MOF\Reg -Filter "*$cid*" | 
+Copy-Item -Destination 'C:\Program Files\WindowsPowerShell\DscService\Configuration\ -ToSession $s -Force
+
+Update-DscConfiguration -ComputerName W16TGT01 -Wait -Verbose
