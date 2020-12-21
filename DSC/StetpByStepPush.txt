@@ -1,14 +1,5 @@
 #############################################
 # SECTION 1
-# 1) Install xPSDesiredStateConfiguration
-# 2) Create the Push Server. 
-
-# SECTION 2
-# Create my Host Configuration
-
-# SECTION 3
-# Execute my code on the Target Host
-
 #############################################
 # Get all the DSC CMDLets
 Get-Command -Noun dsc*
@@ -55,7 +46,6 @@ Configuration LCMConfig {
 
 #############################################
 # Step 2
-
 
 # Your Configuration
 Configuration ExchangeService {
