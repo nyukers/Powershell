@@ -1,7 +1,6 @@
 #############################################
 # SECTION 1
-# 1) Install xPSDesiredStateConfiguration
-# 2) Create the Pull Server. 
+# Create the Pull Server. 
 
 # SECTION 2
 # Create my Host Configuration
@@ -9,10 +8,11 @@
 # SECTION 3
 # Execute my code on the Target Host
 
-#############################################
+##############################################
 # SECTION 1
-# Execute this section on DSC Server !!!
-#############################################
+# Execute this section on DSC Server 
+# 1 time!!!
+##############################################
 
 # Step 1 Install xPSDesiredStateConfiguration
 Install-Module -Name xPSDesiredStateConfiguration
@@ -60,7 +60,7 @@ Start-DscConfiguration .\CreatePullServer -Wait
 
 #############################################
 # SECTION 2
-# Execute this section on DSC Server !!!
+# Execute this section on DSC Server!
 #############################################
 
 # Your Configuration
@@ -96,15 +96,19 @@ Configuration ExchangeService {
 
 #############################################
 # SECTION 3
-# Execute this section on the Target Host !!!
+# Execute this section on the Target host!
+# 1 time!!!
 #############################################
 
-# Run on the target node
+# Run on the target node where:
+# ServerName - it's hostname of DSC Server from SECTION 1
+# "EXCH" - it's must be EQUAL to filename EXCH.mof from SECTION 2
+
 Configuration LCMPullConfig 
 { 
     LocalConfigurationManager 
     { 
-        ConfigurationID = "EXCH"; # it's must be EQUAL to filename EXCH.mof
+        ConfigurationID = "EXCH"; 
         RefreshMode = "PULL";
         DownloadManagerName = "WebDownloadManager";
         RebootNodeIfNeeded = $true;
