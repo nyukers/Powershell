@@ -8,6 +8,7 @@
 # SECTION 3
 # Execute my code on the Target Host
 
+# URL: https://www.signalwarrant.com/powershell-desired-state-configuration-dsc-beginners-pull-mode/
 ##############################################
 # SECTION 1
 # Execute this section on DSC Server 
@@ -26,7 +27,7 @@ Configuration CreatePullServer {
   )
 
   Import-DSCResource -ModuleName xPSDesiredStateConfiguration
-  Import-DSCResource –ModuleName PSDesiredStateConfiguration
+  Import-DSCResource â€“ModuleName PSDesiredStateConfiguration
 
   Node $ComputerName {
     WindowsFeature DSCServiceFeature {
@@ -82,12 +83,13 @@ Configuration ExchangeService {
     }
 }
 
-# Generate the .MOF files
+# Generate the .MOF files for hostname EXCH
  ExchangeService -Computername EXCH
  
 # Create a Checksum for the file listed above
  New-DscChecksum ".\exchangeservice\exch.mof"
 
+# IMPORTANT !!! 
 # Files
 # .\exchangeservice\exch.mof
 # .\exchangeservice\exch.mof.cheksum
@@ -121,7 +123,7 @@ Configuration LCMPullConfig
     } 
 } 
 
-# Create the .mof meta file for the target node
+# Create the .mof metafile(LCM) for the target node
 LCMPullConfig
 
 # We're essentially turning on Pull Mode on the Target
