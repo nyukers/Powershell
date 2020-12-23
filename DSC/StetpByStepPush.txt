@@ -1,6 +1,10 @@
 #############################################
-# SECTION 1
+# Step 1 - Generate a LCM Configuration for target node
+# Step 2 - Generate Your DSC-configuration
+#
+# URL: https://www.signalwarrant.com/powershell-desired-state-configuration-dsc-beginners-push-model/
 #############################################
+
 # Get all the DSC CMDLets
 Get-Command -Noun dsc*
 
@@ -37,6 +41,7 @@ Configuration LCMConfig {
    Get-DscLocalConfigurationManager -CimSession EXCH 
 
    # Apply the LCMConfig for each Target Node
+   # C:\scripts\LCMConfig ?????
    Set-DscLocalConfigurationManager -Path LCMConfig
 
    # Check the LCM Config again
@@ -70,7 +75,7 @@ Configuration ExchangeService {
 ExchangeService -ComputerName EXCH
 
 # MOF files are created in whatever directory you're in the PS Console
-# 1 MOF file per target node
+# 1 MOF file per each target node
 
 # Apply the configuration
 Start-DscConfiguration -path ExchangeService -Wait -Verbose -Force
@@ -78,5 +83,5 @@ Start-DscConfiguration -path ExchangeService -Wait -Verbose -Force
 # View Deployed Configurations
 Get-DscConfiguration -CimSession EXCH
 
-#Testing Config (detect drift)
+#Testing Config (detect difference)
 Test-DscConfiguration -CimSession EXCH
