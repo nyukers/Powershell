@@ -1,4 +1,6 @@
-﻿$ConfigurationData=@{ 
+# It's take MOF-file only
+
+$ConfigurationData=@{ 
     AllNodes = @(
 
     @{
