@@ -15,8 +15,8 @@
 # 1 time!!!
 ##############################################
 
-# Step 1 Install xPSDesiredStateConfiguration
-Install-Module -Name xPSDesiredStateConfiguration
+# Step 1 Install xPSDesiredStateConfiguration from PsGallery 
+Install-Module -Name xPSDesiredStateConfiguration -AllowPrerelease
 
 # Step 2
 # Create the Pull Server. 
