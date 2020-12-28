@@ -45,7 +45,7 @@ Configuration LCMPullConfig
 { 
     LocalConfigurationManager 
     { 
-        ConfigurationID = "WVIT-50N"; 
+        ConfigurationID = "VITANZ"; 
         RefreshMode = "PULL";
         DownloadManagerName = "WebDownloadManager";
         RebootNodeIfNeeded = $false;
