@@ -53,7 +53,7 @@ Configuration LCMPullConfig
         ConfigurationModeFrequencyMins = 30; 
         ConfigurationMode = "ApplyAndAutoCorrect";
         DownloadManagerCustomData = @{
-        ServerUrl = "http://SSW-LOG01.sw.ukrenergo.ent:8080/PSDSCPullServer/PSDSCPullServer.svc"; 
+        ServerUrl = "http://servername:8080/PSDSCPullServer/PSDSCPullServer.svc"; 
         AllowUnsecureConnection = "TRUE"}
     } 
 } 
