@@ -1,8 +1,7 @@
-﻿### for Pull Server installation 
+### for Pull Server installation 
 
 Find-Module xPSDesiredStateConfiguration
 Find-Module xWebAdministration
-
 
 Install-Module -Name xPSDesiredStateConfiguration, xWebAdministration -Force
 
