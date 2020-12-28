@@ -1,4 +1,5 @@
 # It's take MOF-file only
+# Didn`t test!
 
 $ConfigurationData=@{ 
     AllNodes = @(
