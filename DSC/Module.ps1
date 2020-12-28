@@ -15,6 +15,8 @@ Save-Module -Name xPSDesiredStateConfiguration -Path D:\Reports
 # NO INTERNET
 $env:PSModulePath
 
+# Copy files from D:\Reports to PSModulePath
+
 Get-Module -ListAvailable
 
 # NET 5.1
