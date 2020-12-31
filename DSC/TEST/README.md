@@ -1,1 +1,1 @@
-PowerShell Desired State Configuration modes, 2021.
+PowerShell Desired State Configuration push/pull modes, 2021.
