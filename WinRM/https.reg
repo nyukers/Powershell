@@ -1,0 +1,8 @@
+REGEDIT4
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\WSMAN\Listener\*+HTTPS]
+"hostname"="FORZA-LOG01"
+"uriprefix"="wsman"
+"certThumbprint"="11E281D98636753A1FC14D45B869D50A7E326591"
+"Port"=dword:00001762
+
