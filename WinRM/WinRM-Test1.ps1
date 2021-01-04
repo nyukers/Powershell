@@ -1,5 +1,6 @@
 ﻿# Test a remoting connection to localhost, which should work.
-$httpResult = Invoke-Command -ComputerName "localhost" -ScriptBlock {$env:COMPUTERNAME} -ErrorVariable httpError -ErrorAction SilcomlyContinue
+
+$httpResult = Invoke-Command -ComputerName "localhost" -ScriptBlock {$env:COMPUTERNAME} -ErrorVariable httpError -ErrorAction SilentlyContinue
 
 If ($httpResult)
 {
@@ -11,7 +12,7 @@ Else
 }
 
 $httpsOptions = New-PSSessionOption -SkipCACheck -SkipCNCheck -SkipRevocationCheck
-$httpsResult = New-PSSession -UseSSL -ComputerName "localhost" -SessionOption $httpsOptions -ErrorVariable httpsError -ErrorAction SilcomlyContinue
+$httpsResult = New-PSSession -UseSSL -ComputerName "localhost" -SessionOption $httpsOptions -ErrorVariable httpsError -ErrorAction SilentlyContinue
 
 If ($httpsResult)
 {
@@ -23,7 +24,20 @@ Else
 }
 
 
-$thumbprint = "86BCF48082662D4917382B3C7BAE8DF549BF9CAC"
+#######################################################
+
+(Get-Service -Name winrm).Status 
+
+Get-NetConnectionProfile
+Get-NetTCPConnection | Where-Object -Property LocalPort -EQ 5986
+
+Write-Host $env:computerName'.'$env:USERDNSDOMAIN
+$hostFQDN = [System.Net.Dns]::GetHostByName(($env:computerName)).Hostname
+Write-Host $hostFQDN
+
+# new certificate
+
+$thumbprint = "‎11e281d98636753a1fc14d45b869d50a7e326591"
 Get-ChildItem -Path cert:\LocalMachine\My -Recurse | Where-Object { $_.Thumbprint -eq $thumbprint } | Select-Object *
 
 $selector_set = @{
@@ -31,35 +45,8 @@ $selector_set = @{
     Transport = "HTTPS"
 }
 $value_set = @{
-    CertificateThumbprint = "86BCF48082662D4917382B3C7BAE8DF549BF9CAC"
+    CertificateThumbprint = "11E281D98636753A1FC14D45B869D50A7E326591"
 }
 
 New-WSManInstance -ResourceURI "winrm/config/Listener" -SelectorSet $selector_set -ValueSet $value_set
-
-(Get-Service -Name winrm).Status 
-
-Get-NetConnectionProfile
-Get-NetTCPConnection | Where-Object -Property LocalPort -EQ 5986
-
-Get-Item WSMan:\localhost\Clicom\TrustedHosts
-Set-Item WSMan:\localhost\Clicom\TrustedHosts -Value "10.13.1.202" -Force
-
-Get-ChildItem -Path WSMan:\localhost\Clicom\Auth
-
-Test-WSMan log01.forza.com -UseSSL
-
-$webRequest = [Net.WebRequest]::Create("https://log01.forza.com:5986/wsman")
-try { $webRequest.GetResponse() } catch {}
-$cert = $webRequest.ServicePoint.Certificate
-
-$store = New-Object System.Security.Cryptography.X509Certificates.X509Store -ArgumcomList  "Root", "LocalMachine"
-$store.Open('ReadWrite')
-$store.Add($cert)
-$store.Close()
-
-$UserCredcomial = Get-Credcomial
-Invoke-Command -ComputerName VIT-55.forza.com –Сredcomial forza.com\Admin -ScriptBlock {Get-Date} 
-
-Enable-WSManCredSSP -Role Server -Force
-Set-Item -Path "WSMan:\localhost\Service\Auth\CredSSP" -Value $true
 
