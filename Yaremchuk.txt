@@ -1,0 +1,110 @@
+Íàñòðîéêè ñåòè ñ ïîìîùüþ PowerShell 4.0
+Ñåðãåé ßðåì÷óê
+
+New-NetIPAddress -InterfaceAlias Ethernet -IPv4Address 192.168.0.2 -DefaultGateway 192.168.0.1
+Set-NetIPAddress -InterfaceAlias Ethernet -PrefixLength 24
+
+Remove-NetIPAddress -IPAddress 192.168.0.2
+
+Get-DnsClientServerAddress
+Set-DNSClientServerAddress -InterfaceIndex 12 -ServerAddresses "192.168.0.1","8.8.8.8"
+
+Get-NetRoute
+New-NetRoute -DestinationPrefix "0.0.0.0/0" -NextHop "192.168.0.1" -InterfaceIndex 12
+
+Test-NetConnection -ComputerName SRV01.example.org -source localhost, SRV02.example.org
+
+Test-NetConnection -Port 80 -InformationLevel Detailed
+
+Set-NetTCPSetting -SettingName DatacenterCustom -ECNCapability Enabled -CongestionProvider DCTCP
+
+New-NetTransportFilter –SettingName DatacenterCustom –DestinationPrefix 172.16.0.0/16
+
+----------------------
+Íàñòðîéêà Windows Firewall ñ ïîìîùüþ PowerShell
+Ñåðãåé ßðåì÷óê
+
+PS> Import-Module NetSecurity
+PS> Get-Command -Noun "*Firewall*"
+
+PS> Get-NetFirewallProfile
+
+PS> Set-NetFirewallProfile -All -Enabled True
+
+PS> Set-NetFirewallProfile -Profile Domain -Enabled True
+
+PS> Set-NetFirewallProfile –Name Domain –DefaultInboundAction Block
+
+PS> Set-NetFirewallProfile -name Public -DisabledInterfaceAliases Ethernet
+
+PS> Get-NetFirewallRule -Enabled true -Action block
+
+PS> New-NetFirewallRule -Program "C:\Program Files\Internet Explorer\iexplore.exe" -Action Block -Profile Domain, Private -DisplayName "Block IE" -Description "Block IE" Direction Outbound
+PS> New-NetFirewallRule -DisplayName "Allow Inbound OpenVPN Client" -Direction Inbound -LocalPort 1194 -Protocol UDP -Action Allow
+
+PS> Set-NetFirewallRule -DisplayName "Block IE" -Protocol TCP -RemotePort 80 -RemoteAddress "192.168.1.1" -LocalAddress "192.168.1.10"
+
+PS> Get-NetFirewallRule -DisplayName "*IE*"
+
+PS> Disable-NetFirewallRule -DisplayName "Block IE"
+
+PS> Set-NetFirewallRule -DisplayGroup "Windows Firewall Remote Management" -Enabled True
+
+----------------------
+Íîâûå âîçìîæíîñòè PowerShell 5.0
+Ñåðãåé ßðåì÷óê
+
+PS > Get-HotFix -Id KB2883200
+
+PS > Get-Command -Module PowerShellGet
+
+PS > Find-Module xPSDesiredStateConfiguration
+
+PS > Install-Module xPSDesiredStateConfiguration
+
+PS > Get-Command -Module OneGet
+
+PS > Find-Package -Name net
+
+PS > Find-Package antivirus
+
+PS > Install-Package -Verbose DotNet4.5.1
+
+PS > Get-Command -Module NetworkSwitch
+
+PS> $ip = "192.168.0.2"
+PS> $sessionOption = New-CimSessionOption -UseSsl -SkipCACheck -SkipCNCheck -SkipRevocationCheck
+PS> $s = New-CimSession -CN $ip -port 1234 -Auth Basic -Credential admin -SessionOption $sessionOption
+
+PS> Get-NetworkSwitchFeature -CimSession $s
+
+PS> Get-NetworkSwitchEthernetPort -CimSession $s | Format-Table InstanceID, ElementName, MaxSpeed, PortNumber, EnabledState
+
+PS> Disable-NetworkSwitchEthernetPort -PortNumber 1 -CimSession $s
+
+PS>Get-NetworkSwitchEthernetPort -PortNumber 1 -CimSession $s | FT InstanceID, ElementName, MaxSpeed, PortNumber, EnabledState
+
+---------------------------------------
+
+Óïðàâëåíèå Windows Defender ñ ïîìîùüþ PowerShell
+Ñåðãåé ßðåì÷óê
+
+PS> Get-Command -Module Defender
+
+PS> $session = NewCimSession -ComputerName comp1
+PS> Get-MpComputerStatus -CimSession $session
+
+PS> Set-MpPreference -DisableRemovableDriveScanning $false
+
+PS> Add-MpPreference -ExclusionPath C:\Temp
+
+PS> Set-MpPreference -SignatureDefinitionUpdateFileSharesSources \\server\update
+PS> Update-MpSignature -UpdateSource FileShares
+
+PS> Start-MpScan -ScanType FullScan
+
+PS> Get-MpThreat
+PS> Remove-MpThreat
+
+PS> Get-MpThreatCatalog | select SeverityID, ThreatName
+---------------------------------
