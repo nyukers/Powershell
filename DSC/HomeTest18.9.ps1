@@ -24,3 +24,5 @@ LCM -computername GOVERLA -OutputPath .\MOF
 Set-DscLocalConfigurationManager -CimSession $cs -Path .\MOF\ -Verbose
 
 Get-DscLocalConfigurationManager -CimSession $cs | select ConfigurationMode, RefreshMode, RefreshFrequencyMins, RebootNodeIfNeeded | fl
+
+Test-DscConfiguration -CimSession $cs

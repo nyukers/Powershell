@@ -30,8 +30,9 @@ Format-List
 # Apply MOF-file to host GOVERLA
 Start-DscConfiguration -ComputerName GOVERLA -Path c:\VM\shared\PS\DSC\MOF -Wait -Verbose
 
-
 Get-Job -IncludeChildJob
+
+AddFile -OutputPath c:\VM\shared\PS\DSC\MOF -ConfigurationData c:\VM\shared\PS\DSC\configdata.psd1
 
 # Check applied configuration on host GOVERLA 
 Get-DscConfiguration -CimSession GOVERLA | 
