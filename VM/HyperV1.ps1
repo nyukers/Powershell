@@ -1,0 +1,1 @@
+﻿Get-VMIntegrationService -VMName * -Name *"Интерфейс гостевой службы"
