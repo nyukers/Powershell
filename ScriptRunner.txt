@@ -1,0 +1,359 @@
+=====================================================
+2. Execution scripts:
+# policy
+# signing
+# constrained language mode
+
+2.1) Policy.
+RemoteSigned: Scripts downloaded from the Internet must be signed by a trusted publisher.
+Set-ExecutionPolicy RemoteSigned
+Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
+$env:PSExecutionPolicyPreference
+
+Get-ExecutionPolicy -List | ft -AutoSize
+
+By GPO:
+Policies => Administrative Templates => Windows Components => Windows PowerShell and is called Turn on Script Execution.
+So: powershell.exe -ExecutionPolicy "Unrestricted" doesn't work!
+
+Bypass it:
+a) If a user decides to circumvent this policy, he simply copies the contents of a script to the ISE and runs it there. 
+b) RemoteSigned allows unsigned scripts downloaded from the Internet to be started if you unblock the file using Unblock-File.
+c) Another bypass consists of encoding the script in Base64 and transferring it to PowerShell.exe via the EncodedCommand parameter. 
+
+To limit possible damage caused by such activities, it is recommended to use 
+the Constrained Language Mode (look section #2.3 below).
+
+2.2) Signing (pages 26-32 ???????)
+Create template for Certificate...
+Create Certificate...
+Personal => All Tasks => Request New Certificate.
+Enroll ...
+
+Get-ChildItem Cert:\CurrentUser\My -CodeSigningCert
+
+Set-AuthenticodeSignature myScript.ps1 (dir Cert:\CurrentUser\My -CodeSigningCert)
+
+Set-AuthenticodeSignature myScript.ps1 (gci Cert:\CurrentUser\My -CodeSigningCert) -TimestampServer http://timestamp.glob-alsign.com/scripts/timstamp.dll -HashAlgorithm "SHA256"
+
+2.3) Constrained Language Mode.
+$ExecutionContext.SessionState.LanguageMode = "ConstrainedLanguage"
+
+2.3.1) If System environment variable __PSLockDownPolicy set it to 4, so Powershell run in restricted mode ONLY.
+A disadvantage of this procedure is that it always affects all users of a host, including administrators((!
+However, administrators may temporarily remove the environment variable until the GPO becomes effective again. 
+But this is quite cumbersome and definitely not a good solution.
+
+2.3.2) Automatic detection of an execution constraint - creates a module and a script 
+(with a name following the pattern __PSSCRIPT-POLICYTEST_LQU1DAME.3DD.PSM1) under $env:temp and tries to execute them.
+If AppLocker or another tool blocks this attempt, PowerShell will start in restricted language mode.
+Configuring AppLocker
+OR
+Activating Constrained language mode via SRP.
+
+2.4) You will need to remove PowerShell 2.0 Engine.
+Check it: Get-WindowsOptionalFeature -Online -FeatureName MicrosoftWindowsPowerShellV2
+If you need v2.0: powershell.exe -version 2.0
+
+=====================================================
+3. Communication.
+
+3.1) SSH.
+
+Get-WindowsCapability -Online | ? name -like *OpenSSH.Server*
+OR
+Get-WindowsCapability -Online | where name -like *OpenSSH.Server* | Add-WindowsCapability -Online
+
+Set-Service sshd -StartupType Automatic
+Set-Service ssh-agent -StartupType Automatic
+
+To put the SSH server into operation immediately, you must also start the two services manually:
+Start-Service sshd
+Start-Service ssh-agent
+
+Check SSH services: Get-Service -Name *ssh* | select DisplayName, Status, StartType
+Check SSH firewall rules: Get-NetFirewallRule -Name *SSH*
+Check SSH connections: ssh <Name of SSH Server>
+
+3.1.1) Local configuration.
+ssh-keygen - by default, the command saves the key pair in the .ssh folder in your user profile. id_rsa is the private key, and id_rsa.pub is the public key.
+
+Start-Service ssh-agent
+If you want the service to start automatically after a restart, you can use this command:
+Set-Service ssh-agent -StartupType Automatic
+
+To add(remove) your private key to the ssh-agent, you have to enter this command:
+ssh-add <path to private key>
+ssh-add .ssh\id_rsa
+ssh-add -d .ssh\id_rsa
+
+3.1.2) Remote configuration.
+
+Copy the contents of the public key file id_rsa.pub to the remote host to the authorized_keys file in C:\Users\<your user name\.ssh\
+Disabling password authentication:
+In sshd_config file
+	PasswordAuthentication no
+
+Restart-Service sshd
+
+3.1.3) Connection with key (page 61).
+
+Enter-PSession -HostName <remote host> -UserName <user name on the remote computer>
+Invoke-Command -HostName <remote hosts> -UserName <user name on the remote computer> -ScriptBlock {get-process}
+OR
+ssh <user name on the remote computer>@<remote host>
+ssh -i <path to private key>id_rsa <user name on the remote host>@<remote host>
+
+Enter-PSsession and Invoke-Command have the -IdentityFilePath parameter for this purpose:
+Enter-PSession -HostName <remote host> -UserName <user name on the remote host> -IdentityFilePath <path to private key>id_rsa
+
+=====================================================
+3.2) Self-signed sertificate.
+
+3.2.1) Creating a certificate with default values:
+New-SelfSignedCertificate -DnsName lab.contoso.de -CertStoreLocation Cert:\LocalMachine\My
+dir Cert:\LocalMachine\my\<thumbprint-of-certificate> | fl -Property *
+
+For creating wildcard certificates:
+New-SelfSignedCertificate -DnsName lab.contoso.de, *.contoso.de -cert Cert:\LocalMachine\My
+
+This example sets the validity to 2 years:
+New-SelfSignedCertificate -DnsName lab.contoso.de -CertStoreLocation Cert:\LocalMachine\My -NotAfter (Get-Date).AddYears(2)
+
+page 69/////
+
+
+3.3.3) Export certificate:
+$CertPW = ConvertTo-SecureString -String "secret" -Force -AsPlainText
+ It is then passed to the parameter Password when calling Export-PfxCer-tificate:
+Export-PfxCertificate -Password $CertPW ` -Cert cert:\LocalMachine\My\<Thumbprint> myCert.pfx
+
+=====================================================
+3.4) HTTPS:
+
+winrm get winrm/config
+dir WSMan:\localhost\Service | ? Name -eq AllowUnencrypted
+dir WSMan:\localhost\Client | ? Name -eq AllowUnencrypted
+
+3.4.2) Enabling HTTPS on the remote computer:
+Set-WSManQuickConfig -UseSSL
+$Cert = New-SelfSignedCertificate -DnsName "myHost" -CertstoreLocation Cert:\LocalMachine\My
+Export-Certificate -Cert $Cert -FilePath C:\temp\cert
+Enable-PSRemoting -SkipNetworkProfileCheck -Force
+
+dir wsman:\localhost\listener
+
+Remove the HTTP listener this way:
+Get-ChildItem WSMan:\Localhost\listener | Where -Property Keys -eq "Transport=HTTP" | Remove-Item -Recurse
+
+Removes all WSMan listeners:
+Remove-Item -Path WSMan:\Localhost\listener\listener* -Recurse
+
+Add our WSMan HTTPS listener:
+New-Item -Path WSMan:\LocalHost\Listener -Transport HTTPS -Address * -CertificateThumbPrint $Cert.Thumbprint -Force
+
+New-NetFirewallRule -LocalPort 5986 -Protocol TCP -DisplayName "Windows Remote Management (HTTPS-In)" -Name "Windows Remote Management (HTTPS-In)" -Profile Any
+Set-Item WSMan:\localhost\Service\EnableCompatibility-HttpsListener -Value true
+Set-NetConnectionProfile -NetworkCategory Private
+
+Disable the firewall rule for HTTP that Enable-PSRemoting added:
+Disable-NetFirewallRule -DisplayName "Windows Remote Man-agement (HTTP-In)"
+
+3.4.3) Enabling HTTPS on the local computer:
+Import-Certificate -Filepath "C:\temp\cert" -CertStoreLocation "Cert:\LocalMachine\Root"
+Enter-PSSession -ComputerName myHost -UseSSL -Credential (Get-Credential) 
+OR
+Enter-PSSession -ComputerName myHost -UseSSL -Credential (Get-Credential) -SkipCACheck
+
+Invoke-Command -ComputerName myHost -UseSSL -ScriptBlock {Get-Process} -Credential (Get-Credential)
+
+=====================================================
+4. JEA:
+
+By default, there are three Session Configurations on each Windows computer, namely: 
+microsoft.powershell, 
+microsoft.powershell.workflow,
+microsoft.windows.server-managerworkflows.
+
+Get-PSSessionConfiguration
+
+Define "HelpDesk" configuration:
+Register-PSSessionConfiguration -Name HelpDesk
+
+This opens the dialog you already know from managing file permissions:
+Register-PSSessionConfiguration -Name HelpDesk -ShowSecurityDescriptorUI
+
+Defining RunsAs users:
+Register-PSSessionConfiguration -Name HelpDesk -RunAsCredential forza.com\MikeLee
+
+Set additional options via configuration file:
+New-PSSessionConfigurationFile -Path .\MyConfig.pssc
+
+The following are particularly useful to prevent users from potentially harmful actions:
+-LanguageMode with the values FullLanguage, RestrictedLanguage, ConstrainedLanguage, NoLanguage: The latter allows only the exe-cution of cmdlets and functions, other language resources are not available. 
+FullLanguage offers the full range of language capabilities, the other two lie between these two poles.
+-VisibleAliases, VisibleCmdlets, VisibleFunctions, VisibleProviders: These allow you to specify which aliases, cmdlets, functions, and providers are available in the session. 
+You can use wildcards and specify multiple values as array.
+
+Example:
+New-PSSessionConfigurationFile -Path .\MyConfig.pssc -VisibleCmdlets "Get*","Select*"
+
+You adjust the Session Configuration based on this file:
+Set-PSSessionConfiguration -Name HelpDesk -Path .\MyConfig.pssc
+Enter-PSSession -ComputerName Remote-PC -ConfigurationName HelpDesk
+OR
+Invoke-Command -ComputerName Remote-PC -ConfigurationName Helpdesk {Get-ChildItem}
+
+4.2.3 
+New-PSRoleCapabilityFile -Path MyRCF.psrc
+OR
+JEA Helper Tool create MyRCF.psrc
+
+Once you have created the list of permitted cmdlets and parameters, you can add them to the .psrc file. You save this file in a directory called RoleCapabilities under
+$env:ProgramFiles\WindowsPowerShell\Modules
+
+The last step is to link the role capabilities to the desired session configu-ration. To do this, edit the configuration file with the extension .pssc and add the role functions there.
+Since you create this file automatically at the beginning, this (commented out) section for RoleDefinitions should already be there:
+# RoleDefinitions = @{ 'CONTOSO\SqlAdmins' = ` @{ RoleCapabilities = 'SqlAdministration' }; 
+'CONTOSO\SqlManaged' = @{ RoleCapabilityFiles = 'C:\RoleCapability\SqlManaged.psrc' }; 
+'CONTOSO\ServerMonitors' = ` @{ VisibleCmdlets = 'Get-Process' } }
+
+....
+
+=====================================================
+5. Audit:
+- transcription:
+	Start-Transcript and Stop-Transcript cmdlets.
+
+- GPO:
+	Policies > Administrative Templates > Windows Components > Windows PowerShell > PowerShell Transcription
+	-OR-
+	[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\PowerShellCore\Transcription] 
+	"EnableTranscripting"=dword:00000001 
+	"OutputDirectory"="\\server\\pslogs"
+
+- scriptblock logging:
+
+	Turn on PowerShell Script Block Logging and can be found under Policies > Administrative Templates > Windows Components > Windows PowerShell. 
+	-OR-
+	Script block logging for PowerShell Core:
+	[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Pow-erShellCore\ScriptBlockLogging] 
+	"EnableScriptBlockLogging"=dword:00000001
+
+	Application log under Microsoft=> Windows => PowerShell => Operational, and the commands are recorded under
+	Scriptblock logging: Record commands in the event log 109 event ID 4104. If you also record start and stop events, these appear under the IDs 4105 and 4106.
+	
+	In event viewer, activate as source:
+	+ PowerShell (Microsoft-Windows-PowerShell),
+	+ PowerShell (PowerShell)
+	+ PowerShellCore
+
+	Merging command sequences ID 6524:
+	$created = Get-WinEvent -FilterHashtable ` @{ProviderName="Microsoft-Windows-PowerShell"; Id=4104} | where ProcessId -eq 6524
+	$sortedScripts = $created | sort {$_.Properties[0].Value} $mergedScript = -join ($sortedScripts | foreach {$_.Properties[2].Value})
+
+
+- encryption events:
+
+	Template of certification:
+[Version]
+Signature = "$Windows NT$"
+[Strings]
+szOID_ENHANCED_KEY_USAGE = "2.5.29.37"
+szOID_DOCUMENT_ENCRYPTION = "1.3.6.1.4.1.311.80.1"
+[NewRequest]
+Subject = "cn=me@forza.com"
+MachineKeySet = false
+KeyLength = 2048
+KeySpec = AT_KEYEXCHANGE
+HashAlgorithm = Sha1
+Exportable = true
+RequestType = Cert
+KeyUsage = "CERT_KEY_ENCIPHERMENT_KEY_USAGE | CERT_DATA_ENCIPHERMENT_KEY_USAGE"
+ValidityPeriod = "Years"
+ValidityPeriodUnits = "1000"
+[Extensions]
+%szOID_ENHANCED_KEY_USAGE% = "{text}%szOID_DOCUMENT_EN-CRYPTION%"
+
+        1) Request:
+	To request the certificate, use the command:
+	certreq -new <INF-file-name>.inf <Certificate-name>.cer
+
+	The certificate is automatically copied to the local certificate store of the logged-on user.
+
+	2) Encode event: 
+	To enable secure event logging, Microsoft provides a setting in Group Policy. 
+	It is called Enable Protected Event Logging and can be found under Computer Configuration => 
+	Policies => Administrative Templates => Windows Components => Event Logging.
+
+	3) Decode event:
+	$msg = Get-WinEvent Microsoft-Windows-PowerShell/Operational -ComputerName myPC -MaxEvents 2 -Credential domain\user
+	"Last log entry as clear text:"
+	$msg[1] | select -ExpandProperty Message | Unprotect-CmsMessage
+	# $msg[0] is always "prompt"
+
+	4) Protect smth:
+	The process is relatively simple. Protect-CmsMessage expects the input file via the Path parameter. 
+	Alternatively, you can provide the contents to be encrypted via the Content parameter or via a pipeline. 
+	The target file is specified via OutFile; otherwise, the output is stdout.
+
+	$protected = "Hello World"| Protect-CmsMessage -To BDDSAFASFRTNB380HGG657687GFDR
+	$protected | Unprotect-CmsMessage
+
+- registry:
+	As with auditing the file system, three measures are required:
+	+ Enable registry monitoring via GPO
+	+ Configure the system access control list (SACL) for the resource in question
+	+ Analyze the event log
+
+	1) Activate registry auditing:
+	Computer Configuration => Policies => Windows Settings => Security Settings => 
+        Ad-vanced Audit Policy Configuration => Audit Policies => Object Access > Audit Registry.
+	(Microsoft has deprecated the settings under Security Settings => Local Poli-cies => Audit Policy Win7)
+
+	2) Setting permissions for registry keys
+	When changing the SACL of this key in the registry of many computers, it makes sense to use a GPO. 
+	You can configure the necessary setting under Computer Configuration => Policies => Windows Settings => Security Set-tings => Registry.
+
+	3) You can retrieve these logs with PowerShell as follows:
+	Get-EventLog -LogName Security -Source "*auditing*" -InstanceId 4657,4660
+
+=====================================================
+6. Recode:
+- Strict mode:
+	Set-StrictMode -Version Latest
+
+- ScriptAnalyzer:
+        Get-Command -Module PSScriptAnalyzer
+	+ Get-ScriptAnalyzerRule
+	+ Invoke-ScriptAnalyzer
+	+ Invoke-Formatter
+
+	1) Get-ScriptAnalyzerRule -Severity Error
+
+	2) $file = Get-Content -Raw -Path .\CheckSIP.ps1
+	Invoke-ScriptAnalyzer -Path .\CheckSIP.ps1 -Fix
+
+	3) Invoke-Formatter -ScriptDefinition '{ $_.Status.IsCompleted -eq $true }'
+
+$scriptDefinition = @'
+function foo {
+"Hello of all"
+}
+'@
+
+$settings = @{
+    IncludeRules = @("PSPlaceOpenBrace", "PSUseConsistentIndentation")
+    Rules = @{
+        PSPlaceOpenBrace = @{
+            Enable = $true
+            OnSameLine = $false
+        }
+        PSUseConsistentIndentation = @{
+            Enable = $true
+        }
+    }
+}
+
+Invoke-Formatter -ScriptDefinition $scriptDefinition -Settings $settings
+
