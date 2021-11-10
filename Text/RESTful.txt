@@ -1,0 +1,167 @@
+Теперь, когда вы знаете, как работать с данными JSON, давайте сделаем не-
+что более интересное: мы воспользуемся PowerShell для запроса REST API
+и анализа полученных результатов. Вы можете использовать практически
+любой REST API, но для некоторых требуется аутентификация, поэтому
+будем использовать тот, который ее не требует. 
+Используем сервис postcodes.io как вариант REST API, который позволяет вам 
+запрашивать почтовые индексы стран по различным критериям.
+
+Мы будем использовать URI api.postcodes.io/random/postcodes. Когда вы обра-
+щаетесь к этому URI, он запрашивает службу API postcodes.io и возвращает
+случайный почтовый индекс в форме JSON. Чтобы запросить этот URI, мы
+будем использовать PowerShell-командлет Invoke-WebRequest:
+
+PS> $result = Invoke-WebRequest -Uri 'http://api.postcodes.io/random/postcodes'
+PS> $result.Content
+
+{"status":200,"result":{"postcode":"IP12
+2FE","quality":1,"eastings":641878,"northings":250383,"country
+:"England","nhs_ha":"East of England","longitude":
+1.53013518866685,"latitude":52.0988661618569,"european_elector
+al_region":"Eastern","primary_care_trust":"Suffolk","region":"
+East of England","lsoa":"Suffo
+lk Coastal 007C","msoa":"Suffolk Coastal
+007","incode":"2FE","outcode":"IP12","parliamentary_constituen
+cy":"Suffolk Coastal","admin_district":"Suffolk Coa
+stal","parish":"Orford","admin_county":"Suffolk","admin_ward":
+"Orford & Eyke","ccg":"NHS Ipswich and East
+Suffolk","nuts":"Suffolk","codes":{"admin_distri
+ct":"E07000205","admin_county":"E10000029","admin_ward":"E0501
+449","parish":"E04009440","parliamentary_constituency":"E14000
+81","ccg":"E38000086","nuts"
+:"UKH14"}}}
+
+Теперь посмотрим, сможете ли вы преобразовать результат в объект PowerShell:
+PS> $result = Invoke-WebRequest -Uri 'http://api.postcodes.io/random/postcodes'
+PS> $result.Content | ConvertFrom-Json
+
+status result
+------ ------
+200 @{postcode=DE7 9HY; quality=1; eastings=445564;
+northings=343166; country=England; nhs_ha=East Midlands;
+longitude=-1.32277519314161; latitude=...
+
+PS> $result = Invoke-WebRequest -Uri 'http://api.postcodes.io/random/postcodes'
+PS> $contentObject = $result.Content | ConvertFrom-Json
+PS> $contentObject.result
+
+postcode : HA7 2SR
+quality : 1
+eastings : 516924
+northings : 191681
+country : England
+nhs_ha : London
+longitude : -0.312779792807334
+latitude : 51.6118279308721
+european_electoral_region : London
+primary_care_trust : Harrow
+region : London
+lsoa : Harrow 003C
+msoa : Harrow 003
+incode : 2SR
+outcode : HA7
+parliamentary_constituency : Harrow East
+admin_district : Harrow
+parish : Harrow, unparished area
+admin_county :
+admin_ward : Stanmore Park
+ccg : NHS Harrow
+nuts : Harrow and Hillingdon
+codes : @{admin_district=E09000015;
+admin_county=E99999999; admin_ward=E05000303;
+parish=E43000205;
+
+Вы можете без проблем преобразовать ответ в объект JSON. Для этого нужны
+две команды — Invoke-WebRequest и ConvertFrom-Json. Но было бы здорово
+обойтись всего одной, да? Оказывается, в PowerShell есть команда, которая
+сделает все за вас: Invoke-RestMethod.
+Командлет Invoke-RestMethod аналогичен Invoke-WebRequest: он отправляет раз-
+личные HTTP-команды веб-службам и возвращает ответ. Поскольку служба
+API postcodes.io не требует аутентификации, вы можете просто использовать
+параметр Uri в Invoke-RestMethod, чтобы получить ответ API:
+
+PS> Invoke-RestMethod –Uri 'http://api.postcodes.io/random/postcodes'
+status result
+------ ------
+200 @{postcode=NE23 6AA; quality=1; eastings=426492;
+northings=576264; country=England; nhs_ha=North East;
+longitude=-1.5865793029774; latitude=55...
+
+Мы видим, что команда Invoke-RestMethod возвращает код состояния HTTP
+и ответ от API в атрибуте result. А где тут JSON? Как и задумывалось, он уже
+преобразован в объект. Нет необходимости делать это вручную, так как можно
+использовать атрибут result:
+
+PS> (Invoke-RestMethod –Uri 'http://api.postcodes.io/random/postcodes').result
+postcode : SY11 4BL
+quality : 1
+eastings : 332201
+northings : 331090
+country : England
+nhs_ha : West Midlands
+longitude : -3.00873643515338
+latitude : 52.8729967314029
+european_electoral_region : West Midlands
+primary_care_trust : Shropshire County
+region : West Midlands
+lsoa : Shropshire 011E
+msoa : Shropshire 011
+incode : 4BL
+outcode : SY11
+parliamentary_constituency : North Shropshire
+admin_district : Shropshire
+parish : Whittington
+admin_county :
+admin_ward : Whittington
+ccg : NHS Shropshire
+nuts : Shropshire CC
+codes : @{admin_district=E06000051;
+admin_county=E99999999; admin_ward=E05009287;
+parish=E04012256;
+
+Как видите работать с REST API в PowerShell проще простого. 
+
+В конце вам еще парочка примеров с методами GET, POST, DELETE и PUT
+на бесплатном полигоне petstore.swagger.io.
+
+# GET
+ Invoke-RestMethod -Method GET -ContentType "application/json" -Uri "https://petstore.swagger.io/v2/pet/1"
+
+# POST
+$Body = @{
+    id = 19
+    category = @{
+        id = 45
+        name = "Whatever"
+    }
+    name = "Dawg"
+    photoUrls = @(
+        "string"
+    )
+    tags = @(
+        @{
+            id = 0
+            name = "string"
+        }
+    )
+    status = "available"
+}
+
+$JsonBody = $Body | ConvertTo-Json
+$Uri = "https://petstore.swagger.io/v2/pet"
+Invoke-RestMethod -ContentType "application/json" -Uri $Uri -Method POST -Body $JsonBody
+
+# DELETE
+Invoke-RestMethod -ContentType "application/json" -Uri "https://petstore.swagger.io/v2/pet/1" -Method DELETE
+
+# PUT
+$Body = [PSCustomObject]@{
+    id = 1
+    name = "Dawg is a cool boy"
+}
+
+$JsonBody = $Body | ConvertTo-Json
+$Uri = "https://petstore.swagger.io/v2/pet"
+Invoke-RestMethod -ContentType "application/json" -Uri $Uri -Method PUT -Body $JsonBody
+
+Успехов.
