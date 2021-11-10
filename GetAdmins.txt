@@ -1,0 +1,57 @@
+> get-adgroup -filter {GroupCategory -eq ‘Security’ -AND Name -like “admin”}
+
+DistinguishedName : CN=Server Admins,OU=AD Management,DC=lab,DC=adsecurity,DC=org
+GroupCategory : Security
+GroupScope : Global
+Name : Server Admins
+ObjectClass : group
+ObjectGUID : 3877c311-9321-41c0-a6b5-c0d88684b335
+SamAccountName : ServerAdmins
+SID : S-1-5-21-1581655573-3923512380-696647894-2628
+
+
+> get-aduser -filter {AdminCount -eq 1} -Properties Name,AdminCount,ServicePrincipalName,MemberOf
+
+AdminCount : 1
+DistinguishedName : CN=ADSAdministrator,CN=Users,DC=lab,DC=ads,DC=org
+Enabled : True
+MemberOf : {CN=Administrators,CN=Builtin,DC=lab,DC=ads,DC=org, CN=Schema Admins,CN=Users,DC=lab,DC=ads,DC=org, CN=Group
+Policy Creator Owners,CN=Users,DC=lab,DC=ads,DC=org, CN=Enterprise Admins,CN=Users,DC=lab,DC=ads,DC=org…}
+Name : ADSAdministrator
+ObjectClass : user
+ObjectGUID : 72ac7731-0a76-4e5a-8e5d-b4ded9a304b5
+SamAccountName : ADSAdministrator
+SID : S-1-5-21-1581655573-3923512380-696647894-500
+Surname :
+UserPrincipalName :
+
+Группы безопасности могут иметь одну из трех областей действия. Область действия группы влияет на то, какие типы групповых объектов могут быть добавлены в нее и в какие другие группы группа может быть вложена.
+
+Глобальные группы могут быть вложены в локальные группы домена, универсальные группы и другие глобальные группы в одном домене.
+Универсальные группы могут быть вложены в локальные группы домена и другие универсальные группы в любом домене.
+Локальная группа домена не может быть вложена в глобальную или универсальную группу.
+Найти все группы какого-то типа можно с помощью PowerView.
+
+Get-DomainGroup -GroupScope DomainLocal — найти локальные группы;
+Get-DomainGroup -GroupScope NotDomainLocal — найти нелокальные группы;
+Get-DomainGroup -GroupScope Global — найти глобальные группы;
+Get-DomainGroup -GroupScope NotGlobal — найти неглобальные группы;
+Get-DomainGroup -GroupScope Universal— найти универсальные группы;
+Get-DomainGroup -GroupScope NotUniversal — найти неуниверсальные группы;
+Get-DomainGroup -GroupProperty Security — найти группы безопасности;
+Get-DomainGroup -GroupProperty Distribution — найти группы распространения;
+Get-DomainGroup -GroupProperty CreatedBySystem — найти группы, созданные системой.
+
+
+Найти локальных администраторов можно с помощью команды Invoke-EnumerateLocalAdmin | ft -autosize.
+
+Список локальных администраторов
+Получить список всех пользователей поможет модуль PowerShell activedirectory, достаточно выполнить команду Get_ADUser -filter *. Получить список групп, 
+в которых числится определенный пользователь, можно командой Get-NetGroup -UserName [user].
+
+Также есть возможность узнать список компьютеров, к которым имеет доступ конкретный пользователь или группа. Для этого используйте команды Find-GPOLocation -UserName [user] и Find-GPOLocation -GroupName [group]. 
+Но можно вернуть и список объектов, имеющих доступ к определенному компьютеру. 
+Для этого есть команда Find-GPOComputerAdmin -ComputerName [computer] -Recurse.
+
+Еще очень важная информация, которую мы можем получить: какие объекты групповой политики применяются к конкретной машине. 
+Делается это командой Get-DomainGPO -ComputerIdentity [PC_id] -Properties displayname.
