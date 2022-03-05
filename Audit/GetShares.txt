@@ -1,0 +1,36 @@
+wmic share get /format:list
+wmic /node: COMPUTER_NAME share get
+
+Полезный инструмент для поиска данных — PowerView. Он автоматически обнаруживает сетевые ресурсы и 
+файловые серверы с помощью команд Find-DomainShare и Get-DomainFileServer.
+
+Кстати, PowerView встроен в фреймворк PowerShell Empire и представлен двумя модулями:
+
+situational_awareness/network/powerview/share_finder
+situational_awareness/network/powerview/get_fileserver
+
+Определить, где конкретный пользователь или группа пользователей вошли в систему, 
+можно с помощью команд PowerView и модуля PowerShell Empire.
+
+>Find-DomainUserLocation -UserIdentity USER_NAME
+>Find-DomainUserLocation -UserGroupIdentity GROUP_NAME
+
+situational_awareness/network/powerview/user_hunter
+
+Многие — может быть, даже вы — позволяют браузерам сохранять свои пароли. И часто 
+мы используем одни и те же пароли для разных сервисов, так что найденные 
+в браузере пароли нам еще, скорее всего, пригодятся.
+
+Модули PowerShell Empire.
+
+collection/ChromeDump
+collection/FoxDump
+
+Вытащить пароли можно и вручную. Для этого сохраните профиль браузера, импортируйте 
+его на виртуальную машину, откройте браузер и посмотрите пароли.
+
+Файлы профилей Firefox лежат в C:\Users\TARGET\AppData\Roaming\Mozilla\Firefox\Profiles, 
+а профилей Google Chrome — в C:\Users\TARGET\AppData\Local\Google\Chrome\User Data\Default. 
+
+Чтобы узнать данные удаленного доступа, можно использовать модуль Metasploit post/windows/gather/enum_putty_saved_sessions 
+или модули Empire collection/netripper и credentials/sessiongopher.
