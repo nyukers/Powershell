@@ -1,0 +1,1 @@
+PowerShell.exe -Noninteractive -ExecutionPolicy Bypass -Noprofile  -File Using_Get-HPiLOMemoryInfo.ps1 -Address "10.13.3.37" -Credential admin
