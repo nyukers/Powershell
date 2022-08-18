@@ -3,3 +3,5 @@ RcViewer3 is a GUI for CmRcViewer.exe utility of MS SCCM.
 Hosts.csv is contains list of your hosts, CmRcViewerSessions.log is logfile of RcViewer's sessions.
 Project was compiled by SAPIEN Powershell Studio 2022.
 http://nyukers.blogspot.com/2015/10/remote-control-tool-ms-sccm-as.html
+
+(C)opyright, 2022.
