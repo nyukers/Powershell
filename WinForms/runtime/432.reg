@@ -1,0 +1,5 @@
+REGEDIT4
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Microsoft\ConfigMgr10\AdminUI\Connection]
+"Server"="sccm03.forza.com"
+
