@@ -683,22 +683,31 @@ $buttonConnect_Click= {
 					Out-File -FilePath $logpath -InputObject "$date - $Hostname is connected." -Append
 				}
 				else
-				{ 
-				$labelStatusOk.Text = "Status: CmRcViewer.exe not found!"
-				$labelStatusOk.ForeColor = 'Red'
+				{
+					if (Test-Path 'CmRcViewer.exe')
+					{
+						$cmdir = Get-Location
+						& $cmdir'\CmRcViewer.exe' $Hostname
+						Out-File -FilePath $logpath -InputObject "$date - $Hostname is connected." -Append
+					}
+					else
+					{
+						$labelStatusOk.Text = "Status: CmRcViewer.exe not found!"
+						$labelStatusOk.ForeColor = 'Red'
+					}
 				}
+				
+			}
 			
 		}
-		
+		else
+		{
+			#[System.Windows.Forms.MessageBox]::Show("$HostName is offline or not accessible, please check Hostname and try again", 'Status', 'OK', 'Error')
+			$labelStatusOk.Text = "Status: $HostName is offline or not accessible!"
+			$labelStatusOk.ForeColor = 'Red'
+			Out-File -FilePath $logpath -InputObject "$date - $HostName is offline or not accessible." -Append
+		}
 	}
-	else
-	{
-		#[System.Windows.Forms.MessageBox]::Show("$HostName is offline or not accessible, please check Hostname and try again", 'Status', 'OK', 'Error')
-		$labelStatusOk.Text = "Status: $HostName is offline or not accessible!"
-		$labelStatusOk.ForeColor = 'Red'
-		Out-File -FilePath $logpath -InputObject "$date - $HostName is offline or not accessible." -Append
-	}
-}
 }
 
 $buttonClose_Click={

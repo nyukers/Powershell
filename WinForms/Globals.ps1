@@ -4,7 +4,9 @@
 $hostpath  = "Hosts.csv"
 $logpath   = "CmRcViewerSessions.log"
 $logsystem = "C:\Windows\CCM\Logs\CmRcService.log"
-$cmpath    = "C:\Program Files (x86)\Microsoft Configuration Manager\AdminConsole\bin\i386\CmRcViewer.exe"
+# MS SCCM since 2012
+$cmpath = "C:\Program Files (x86)\Microsoft Configuration Manager\AdminConsole\bin\i386\CmRcViewer.exe"
+# MS MECM since 2019
 $cmpath2   = "C:\Program Files (x86)\Microsoft Endpoint Manager\AdminConsole\bin\i386\CmRcViewer.exe"
 $cmtracepath = "C:\Windows\CCM\CmTrace.exe"
 
