@@ -23,3 +23,10 @@ Get-Host
 
 Get-Module -ListAvailable | where {$_.name -like "*PSReadline*"}
 Get-PSReadlineOption | select HistoryNoDuplicates, MaximumHistoryCount, HistorySearchCursorMovesToEnd, HistorySearchCaseSensitive, HistorySavePath, HistorySaveStyle
+Get-PSReadlineKeyHandler | ? {$_.function -like '*hist*'}
+
+Get-History | Select-String -Pattern "Get-H"
+Clear-History -CommandLine 'dir'
+
+Get-History | Export-Clixml -Path c:\tmp\commands_hist.xml
+
