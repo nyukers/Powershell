@@ -1,2 +1,2 @@
 # Powershell
-Some Powershell scripts for virtual company forza.com.
+Some admin Powershell scripts for virtual company Forza.com.
